@@ -27,5 +27,5 @@ CheckPoint.prototype.isInRange = function(point){
 }
 
 CheckPoint.prototype.clear = function(){
-    this.clear = true;
+    this.isClear = true;
 }

@@ -10,7 +10,7 @@ window.addEventListener("load", function() {
   var fields = new Array();
   // フィールドを登録
   var fields = new Array();
-  fields.push(new Field(new Point(0 ,0)).getImage());
+  fields.push(new Field(new Point(0 ,0)));
   var canvas = document.getElementById(gameConfig.getWindow());
   var context = canvas.getContext('2d');
   drawEvent(context, gameConfig, fields);
@@ -18,7 +18,7 @@ window.addEventListener("load", function() {
   //チェックポイント
   var checkPoints = new Array();
   for(var checkPointIndex = 0; checkPointIndex < 3; checkPointIndex++){
-    checkPoints.push(new CheckPoint(new Point(parseInt(Math.random() * gameConfig.getWidth()), parseInt(Math.random() * gameConfig.getHeight()))).getImage());  
+    checkPoints.push(new CheckPoint(new Point(parseInt(Math.random() * gameConfig.getWidth()), parseInt(Math.random() * gameConfig.getHeight()))));  
   }
   var checkPointCanvas = document.getElementById(gameConfig.getCheckPoint());
   var ctxCheckPoint = checkPointCanvas.getContext('2d');
@@ -28,7 +28,7 @@ window.addEventListener("load", function() {
 //  var player = new Player(new Point(playerX, playerY))  
   // ゴール
   var goals = new Array();
-  goals.push(new Goal(new Point(parseInt(Math.random() * gameConfig.getWidth()), parseInt(Math.random() * gameConfig.getHeight()))).getImage()); 
+  goals.push(new Goal(new Point(parseInt(Math.random() * gameConfig.getWidth()), parseInt(Math.random() * gameConfig.getHeight())))); 
   var goalCanvas = document.getElementById(gameConfig.getGoal());
   var ctxGoal = goalCanvas.getContext('2d');
   drawEvent(ctxGoal, gameConfig, goals);
@@ -42,16 +42,18 @@ window.addEventListener("load", function() {
   }
   socket.on('point', function(data){
     // チェックポイントの範囲に入ったら画像を変える
-    for(var checkPoint in checkPoints){
-      if(!checkPoint.isClear() && checkPoint.isInRange(new Point(data.x, data.y))){
-        checkPoint.clear();
+    var dataPoint = {x : parseInt(data.x, 10) , y : parseInt(data.y , 10)};
+    console.log("x:" + data.x + " y:" + data.y);
+    for(var i=0; i<checkPoints.length; i++){
+      if(!checkPoints[i].isClear && checkPoints[i].isInRange(new Point(dataPoint.x, dataPoint.y))){
+        checkPoints[i].clear();
       }
     }
     drawEvent(ctxCheckPoint, gameConfig, checkPoints);
 
       
     // ゴールの範囲に入ったら画像を変える
-    if(!goals[0].isClear() && goals[0].isInRange(new Point(data.x, data.y))){
+    if(!goals[0].isClear && goals[0].isInRange(new Point(data.x, data.y))){
       goals[0].clear();
     }
     drawEvent(ctxCheckPoint, gameConfig, goals);
@@ -64,21 +66,23 @@ window.addEventListener("load", function() {
 //       }, false);
   });
 
-  console.log("player (" + player.getX() + "," + player.getY() + ")");
+//   console.log("player (" + player.getX() + "," + player.getY() + ")");
   
   // キー入力
-  new SlantFloor().mouseMove(gameConfig.getWidth(), gameConfig.getHeight());
+  new SlantFloor().init(gameConfig.getWidth(), gameConfig.getHeight());
 });
 
 /**
  * 描画イベント
  */
 function drawEvent(context, config, objects){
+
   for(var cpi in objects){
-    objects[cpi].getImage().addEventListener('load', function() {
-      for(var cpj in objects){
-        context.drawImage(objects[cpj].getImage(), objects[cpj].getX(), objects[cpj].getY());
-      }
-    }, false);
+    var images = objects[cpi].getImage();
+    images.getImage().addEventListener('load', function() {
+      //for(var cpj in objects){
+        context.drawImage(this.getImage(), this.getX(), this.getY());
+      //}
+    }.bind(images), false);
   }
 }
