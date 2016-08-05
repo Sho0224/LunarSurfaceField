@@ -114,6 +114,7 @@ PCA9685.prototype = {
           i2cSlave.write8( pwm + 1, tickH);
           yield self.sleep(1, thread);
           i2cSlave.write8( pwm, tickL);
+          yield self.sleep(3, thread);
 
           resolve();
 

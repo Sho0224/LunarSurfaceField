@@ -12,6 +12,7 @@ function SlantFloor(){
 	this.yVal=0;
 	this.maxX=20;
 	this.maxY=20;
+	this.maxS=20;
 	this.unitValue=2;
 	this.interval = 50;
 	this.sxOffsetAngle = -12;
@@ -104,16 +105,31 @@ SlantFloor.prototype.keyboardAddEvent = function(){
 SlantFloor.prototype.keyboardController = function(){
 	//console.log("key");
 	var self = this;
+	console.log(self.yVal,self.xVal);
+	/*
 	if(!(self.keyBuffer[65]||self.keyBuffer[68]||self.keyBuffer[87]||self.keyBuffer[83])
 		&& radiconVal[0]==1 && radiconVal[1]==1 && radiconVal[2]==1 && radiconVal[3]==1){
 		//console.log(radiconVal);
 		self.timer = setTimeout(self.keyboardController.bind(self),self.interval);
 		return;
 	}
+	*/
 	if(self.keyBuffer[65]){self.yVal-= self.unitValue;}//a
 	if(self.keyBuffer[68]){self.yVal+= self.unitValue;}//d
 	if(self.keyBuffer[87]){self.xVal+= self.unitValue;}//w
 	if(self.keyBuffer[83]){self.xVal-= self.unitValue;}//s
+
+	if(self.keyBuffer[100]){self.yVal-= self.unitValue;}//4
+	if(self.keyBuffer[102]){self.yVal+= self.unitValue;}//6
+	if(self.keyBuffer[104]){self.xVal+= self.unitValue;}//8
+	if(self.keyBuffer[98]){self.xVal-= self.unitValue;}//2
+
+	if(self.keyBuffer[101]){self.yVal = 0;self.xVal = 0;}//5
+
+	if(self.keyBuffer[103]){self.xVal = self.maxX; self.yVal = -self.maxY;}//7
+	if(self.keyBuffer[105]){self.xVal = self.maxX; self.yVal =  self.maxY;}//9
+	if(self.keyBuffer[97]){self.xVal = -self.maxX; self.yVal = -self.maxY;}//1
+	if(self.keyBuffer[99]){self.xVal = -self.maxX; self.yVal =  self.maxY;}//3
 	//radicon
 	//console.log(radiconVal);
 	if(radiconVal[2]==1 && radiconVal[3]==0){self.yVal-= self.unitValue;}//a
@@ -150,6 +166,8 @@ SlantFloor.prototype.setServoXY = function(nx,ny){
 SlantFloor.prototype.setAngle = function( cha , angle ){
 	var self = this;
 	var offsetAngle = 0;
+	if(angle > self.maxS){angle = self.maxS;}
+	if(angle < -self.maxS){angle = -self.maxS;}
 	if( cha == self.SX_CH ){
 		offsetAngle = self.sxOffsetAngle;
 	} else if ( cha == self.SY_CH) {
