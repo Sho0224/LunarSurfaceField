@@ -36,7 +36,7 @@ window.addEventListener("load", function() {
   // websocketから玉の現在位置を取得する
   var socket = { on: function(){} };
   if(!socket.connected){
-    socket = io.connect('http://10.11.12.191:3001');
+    socket = io.connect('http://192.168.11.2:3001');
   } else {
     socket.connect();
   }

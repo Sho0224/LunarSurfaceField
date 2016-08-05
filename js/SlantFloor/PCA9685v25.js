@@ -71,35 +71,18 @@ PCA9685.prototype = {
     });  
   },
   setServo: function(servoPort,angle){
-    console.log(servoPort,angle)
+    //console.log(servoPort,angle)
     var self = this;
 
     var portStart = 8;
     var portInterval = 4;
-    /*
-    var freq = 61; // Hz
-    var tickSec = ( 1 / freq ) / 4096; // 1bit resolution( sec )
-    
-    var centerPulse,maxPulse,angleRange,pulseRange;
-    if(self.centerPulse && self.maxPulse && self.angleRange){
-      centerPulse = self.centerPulse;
-      maxPulse = self.maxPulse;
-      pulseRange = maxPulse - minPulse;
-      angleRange = self.angleRange;
-      console.log(minPulse,maxPulse,angleRange,pulseRange);
-    }else{
-      console.log("wrong param.");
-    }
-    var pulse = minPulse + angle / angleRange * pulseRange;
-    var ticks = Math.round(pulse / tickSec);
-    */
 
     var center,range,angleRange;
     if(self.centerPulse && self.rangePulse && self.angleRange){
       center = self.centerPulse;
       range = self.rangePulse;
       angleRange = self.angleRange;
-      console.log(center,range,angleRange);
+      //console.log(center,range,angleRange);
     }else{
       console.log("wrong param.");
       return;

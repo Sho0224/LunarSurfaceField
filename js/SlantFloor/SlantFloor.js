@@ -2,13 +2,18 @@
 
 var port;  
 var useTouch = false;
+var radiconVal = [1,1,1,1];
 
 function SlantFloor(){
 	this.servoDriver;
+	this.timer;
+	this.keyBuffer = new Array();
 	this.xVal=0;
 	this.yVal=0;
 	this.maxX=20;
 	this.maxY=20;
+	this.unitValue=1.5;
+	this.interval = 33;
 	this.sxOffsetAngle = -12;
 	this.syOffsetAngle = -12;
 	this.SX_CH = 1;
@@ -23,9 +28,10 @@ SlantFloor.prototype.init = function(){
 	console.log(this);
 	var self = this;
 	self.i2cInit().then(()=>{
-	//self.gpioInit().then(()=>{
-	self.keyboardController();
-	//});
+	self.gpioInit().then(()=>{
+	self.keyboardAddEvent();
+	self.timer = setInterval(self.keyboardController.bind(self),self.interval);
+	});
 	});
 }
 SlantFloor.prototype.gpioInit = function(){
@@ -36,18 +42,16 @@ SlantFloor.prototype.gpioInit = function(){
 	    self.lstickPort2 = gpioAccess.ports.get(197);
 	    self.rstickPort1 = gpioAccess.ports.get(198);
 	    self.rstickPort2 = gpioAccess.ports.get(199);
-	    console.log(self.lstickPort1);
 	    return Promise.all([
 	      self.lstickPort1.export("in"),
 	      self.lstickPort2.export("in"),
 	      self.rstickPort1.export("in"),
 	      self.rstickPort2.export("in")
 	    ]).then(()=>{
-	    	console.log(self.lstickPort1);
-	    	self.lstickPort1.onchange = self.radioController.bind(self);
-	    	self.lstickPort2.onchange = self.radioController.bind(self);
-	    	self.rstickPort1.onchange = self.radioController.bind(self);
-	    	self.rstickPort2.onchange = self.radioController.bind(self);
+	    	self.lstickPort1.onchange = self.radioController.bind(0);
+	    	self.lstickPort2.onchange = self.radioController.bind(1);
+	    	self.rstickPort1.onchange = self.radioController.bind(2);
+	    	self.rstickPort2.onchange = self.radioController.bind(3);
 	    	resolve();
 	    });
 	  }).catch(error=>{
@@ -67,6 +71,7 @@ SlantFloor.prototype.i2cInit = function(){
 	    self.servoDriver.init(0.00150,0.00060,50,true).then(function(){
 	      console.log("servo init");
 	      self.setServoXY( 0, 0 );
+	      
 	      resolve();
 			}).catch(e=> {
 				console.error('error', e);
@@ -75,64 +80,57 @@ SlantFloor.prototype.i2cInit = function(){
 		});
 	});
 }
-SlantFloor.prototype.radioController = function(){
+SlantFloor.prototype.radioController = function(v){
+	console.log(this,v);
+	console.log(SlantFloor);
+	radiconVal[this] = v;
+	console.log(radiconVal);
+}
+SlantFloor.prototype.keyboardAddEvent = function(){
 	var self = this;
-	console.log(self.lstickPort1);
-	Promise.all([
-    self.lstickPort1.read(),
-    self.lstickPort2.read(),
-    self.rstickPort1.read(),
-    self.rstickPort2.read()
-  ]).then(v=>{
-    console.log(v);
-  });
+	window.addEventListener('keydown',function(e){
+		console.log("keydown");
+		self.keyBuffer[e.keyCode] = true;
+	});
+	window.addEventListener('keyup',function(e){
+		self.keyBuffer[e.keyCode] = false;
+	});
+	window.addEventListener('blur',function(){
+		self.keyBuffer.length = 0;
+	});
 }
 SlantFloor.prototype.keyboardController = function(){
+	console.log("key");
 	var self = this;
-	window.addEventListener('keypress', function(event){
-		console.log(event);
-		var x = self.xVal;
-		var y = self.yVal;
-		switch(event.key)
-		if(event.key == 'z'){
-	      x -= 1;
-		}
-		if(event.key == 'x'){
-	      y += 1;
-		}
-		if(event.key == 'c'){
-	      x += 1;
-		}
-		if(event.key == 's'){
-	      y -= 1;
-		}
-		if(x < -30){
-			x = -30;
-		}
-		if(x > 10){
-			x = 10;
-		}
-		if(y < -30){
-			y = -30;
-		}
-		if(y > 10){
-			y = 10;
-    }
-		console.log("(x, y)=(" + Number((document.getElementById("xRange")).value) + ", " + Number((document.getElementById("yRange")).value) + ")");
-    self.setServoXY(x, y);
-	}, true);
+	if(!(self.keyBuffer[65]||self.keyBuffer[68]||self.keyBuffer[87]||self.keyBuffer[83])){
+		//return;
+	}
+	if(self.keyBuffer[65]){self.yVal-= self.unitValue;}//a
+	if(self.keyBuffer[68]){self.yVal+= self.unitValue;}//d
+	if(self.keyBuffer[87]){self.xVal+= self.unitValue;}//w
+	if(self.keyBuffer[83]){self.xVal-= self.unitValue;}//s
+	//radicon
+	console.log(radiconVal);
+	if(radiconVal[2]==1 && radiconVal[3]==0){self.yVal-= self.unitValue;}//a
+	if(radiconVal[2]==0 && radiconVal[3]==0){self.yVal+= self.unitValue;}//d
+	if(radiconVal[0]==0){self.xVal+= self.unitValue;}//w
+	if(radiconVal[1]==0){self.xVal-= self.unitValue;}//s
+
+	if(self.xVal < -self.maxX){ self.xVal = -self.maxX;}
+	if(self.xVal > self.maxX){ self.xVal = self.maxX;}
+	if(self.yVal < -self.maxY){ self.yVal = -self.maxY;}
+	if(self.yVal > self.maxY){ self.yVal = self.maxY;}
+	self.setServoXY(self.xVal, self.yVal);
 }
 
-SlantFloor.prototype.setServoXY = function(sx,sy){
+SlantFloor.prototype.setServoXY = function(nx,ny){
 	var self = this;
-	this.xVal = sx;
-	this.yVal = sy;
-	var nX, nY;
-	nX = 0.7 * sx - 0.7 * sy;
-	nY = 0.7 * sx + 0.7 * sy;
-	this.setAngle( self.SX_CH, nX);
+	var sx, sy;
+	sx = 0.71 * nx + 0.71 * ny;
+	sy = -0.71 * nx + 0.71 * ny;
+	this.setAngle( self.SX_CH, sx);
 	Sleep( 3 );
-	this.setAngle( self.SY_CH, nY);
+	this.setAngle( self.SY_CH, sy);
 }
 
 SlantFloor.prototype.setAngle = function( cha , angle ){
@@ -148,7 +146,7 @@ SlantFloor.prototype.setAngle = function( cha , angle ){
 
 
 	self.servoDriver.setServo(cha,angle + offsetAngle).then(function(){
-    console.log('value:', angle+offsetAngle);
+    //console.log('value:', angle+offsetAngle);
 	});
 }
 
