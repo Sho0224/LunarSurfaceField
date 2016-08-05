@@ -6,13 +6,13 @@ var radiconVal = [1,1,1,1];
 
 function SlantFloor(){
 	this.servoDriver;
-	this.timer;
+	this.timer = new Array();
 	this.keyBuffer = new Array();
 	this.xVal=0;
 	this.yVal=0;
 	this.maxX=20;
 	this.maxY=20;
-	this.maxS=20;
+	this.maxS=17;
 	this.unitValue=2;
 	this.interval = 50;
 	this.sxOffsetAngle = -12;
@@ -32,6 +32,8 @@ SlantFloor.prototype.init = function(){
 	self.gpioInit().then(()=>{
 		self.keyboardAddEvent();
 		//self.timer = setInterval(self.keyboardController.bind(self),self.interval);
+		//self.timer = setTimeout(self.keyboardController.bind(self),self.interval);
+	      	
 	});
 	});
 }
@@ -72,7 +74,6 @@ SlantFloor.prototype.i2cInit = function(){
 	    self.servoDriver.init(0.00150,0.00060,50,true).then(function(){
 	      console.log("servo init");
 	      self.setServoXY( 0, 0 ).then(()=>{
-	      	self.timer = setTimeout(self.keyboardController.bind(self),self.interval);
 	      	resolve();
 	      });
 			}).catch(e=> {
@@ -84,23 +85,97 @@ SlantFloor.prototype.i2cInit = function(){
 }
 SlantFloor.prototype.radioController = function(v){
 	console.log(this,v);
-	console.log(SlantFloor);
 	radiconVal[this] = v;
-	console.log(radiconVal);
 }
 SlantFloor.prototype.keyboardAddEvent = function(){
 	console.log("keyboardAddEvent");
 	var self = this;
 	window.addEventListener('keydown',function(e){
-		console.log("keydown");
-		self.keyBuffer[e.keyCode] = true;
+		if(e.key == "NumLock"){return;}
+		//console.log("keydown"+e.key);
+		switch(e.key){
+			case "8"://up
+				self.timer[8] = setInterval(self.moveUp.bind(self),self.interval);
+				break;
+			case "4"://left
+				self.timer[4] = setInterval(self.moveLeft.bind(self),self.interval);
+				break;
+			case "6"://right
+				self.timer[6] = setInterval(self.moveRight.bind(self),self.interval);
+				break;
+			case "2"://down
+				self.timer[2] = setInterval(self.moveDown.bind(self),self.interval);
+				break;
+			case "5"://center
+				self.moveCenter();
+				break;
+		}
+		//self.keyBuffer[e.keyCode] = true;
 	});
 	window.addEventListener('keyup',function(e){
-		self.keyBuffer[e.keyCode] = false;
+		if(e.key == "NumLock"){return;}
+		//console.log("keyup"+e.key);
+		switch(e.key){
+			case "8"://up
+				clearInterval(self.timer[8]);
+				break;
+			case "4"://left
+				clearInterval(self.timer[4]);
+				break;
+			case "6"://right
+				clearInterval(self.timer[6]);
+				break;
+			case "2"://down
+				clearInterval(self.timer[2]);
+				break;
+		}
+		//self.keyBuffer[e.keyCode] = false;
 	});
 	window.addEventListener('blur',function(){
-		self.keyBuffer.length = 0;
+		//self.keyBuffer.length = 0;
 	});
+}
+SlantFloor.prototype.moveCenter = function(){
+	console.log("center");
+	var self = this;
+	self.xVal = 0;
+	self.yVal = 0;
+	self.setServoXY(self.xVal, self.yVal).then(()=>{
+		//self.timer = setTimeout(self.keyboardController.bind(self),self.interval);
+	});
+
+}
+SlantFloor.prototype.moveLeft = function(){
+	var self = this;
+	self.yVal-= self.unitValue;
+	self.setServoXY(self.xVal, self.yVal).then(()=>{
+		//self.timer = setTimeout(self.keyboardController.bind(self),self.interval);
+	});
+
+}
+SlantFloor.prototype.moveRight = function(){
+	var self = this;
+	self.yVal+= self.unitValue;
+	self.setServoXY(self.xVal, self.yVal).then(()=>{
+		//self.timer = setTimeout(self.keyboardController.bind(self),self.interval);
+	});
+	
+}
+SlantFloor.prototype.moveUp = function(){
+	var self = this;
+	self.xVal+= self.unitValue;
+	self.setServoXY(self.xVal, self.yVal).then(()=>{
+		//self.timer = setTimeout(self.keyboardController.bind(self),self.interval);
+	});
+
+}
+SlantFloor.prototype.moveDown = function(){
+	var self = this;
+	self.xVal-= self.unitValue;
+	self.setServoXY(self.xVal, self.yVal).then(()=>{
+		//self.timer = setTimeout(self.keyboardController.bind(self),self.interval);
+	});
+	
 }
 SlantFloor.prototype.keyboardController = function(){
 	//console.log("key");
@@ -166,8 +241,14 @@ SlantFloor.prototype.setServoXY = function(nx,ny){
 SlantFloor.prototype.setAngle = function( cha , angle ){
 	var self = this;
 	var offsetAngle = 0;
-	if(angle > self.maxS){angle = self.maxS;}
-	if(angle < -self.maxS){angle = -self.maxS;}
+	if(angle > self.maxS){
+		angle = self.maxS;
+		self.timer.forEach((timer)=>{clearInterval(timer)});
+	}
+	if(angle < -self.maxS){
+		angle = -self.maxS;
+		self.timer.forEach((timer)=>{clearInterval(timer)});
+	}
 	if( cha == self.SX_CH ){
 		offsetAngle = self.sxOffsetAngle;
 	} else if ( cha == self.SY_CH) {
