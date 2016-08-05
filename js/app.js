@@ -24,6 +24,9 @@ window.addEventListener("load", function() {
   var ctxCheckPoint = checkPointCanvas.getContext('2d');
   drawEvent(ctxCheckPoint, gameConfig, checkPoints);
 
+
+  // スコアの初期値描画
+  drawScore(0);
 //  var playerX = 0, playerY = 0;
 //  var player = new Player(new Point(playerX, playerY))  
   // ゴール
@@ -49,7 +52,7 @@ window.addEventListener("load", function() {
       if(!checkPoints[i].isClear && checkPoints[i].isInRange(new Point(dataPoint.x, dataPoint.y))){
         checkPoints[i].clear();
         console.log("Clear game:x:" + dataPoint.x + " game:y:" + dataPoint.y);
-
+        drawScore(getScore(checkPoints));
       }
     }
     drawEvent(ctxCheckPoint, gameConfig, checkPoints);
@@ -111,4 +114,28 @@ function drawEvent(context, config, objects){
       //}
     }.bind(images), false);
   }
+}
+
+/**
+ * スコア描画イベント
+ */
+function drawScore(score){
+  var gameConfig = new GameConfig();
+  var gameCanvax = document.getElementById(gameConfig.getScore());
+  var ctxScore = gameCanvax.getContext('2d');
+  ctxScore.clearRect(0,0,300,300);
+  ctxScore.font = "50px 'ＭＳ ゴシック'";
+  ctxScore.fillStyle = '#fff';
+  ctxScore.fillText("score:" + score,100,100);
+}
+
+/**
+ * スコア取得イベント
+ */
+function getScore(checkPoints){
+  var score = 0;
+  for(var i=0; i<checkPoints.length; i++){
+    if(checkPoints[i].isClear){score++};
+  }
+  return score;
 }
